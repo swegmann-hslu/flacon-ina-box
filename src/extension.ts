@@ -49,11 +49,14 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('tipServer.start', () => startServer(context)),
     vscode.commands.registerCommand('tipServer.stop', stopServer),
     vscode.commands.registerCommand('tipServer.toggle', () => toggleServer(context)),
-    vscode.commands.registerCommand('tipServer.open', openServerUrl)
+    vscode.commands.registerCommand('tipServer.open', openServerUrl),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => configurePylanceTipPath(context))
   );
 
   updateStatusBar();
   statusBarItem.show();
+
+  void configurePylanceTipPath(context);
 }
 
 export async function deactivate(): Promise<void> {
@@ -75,7 +78,7 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
     return;
   }
 
-  const workspaceFolder = await getSingleWorkspaceFolder();
+  const workspaceFolder = getSingleWorkspaceFolder();
   if (!workspaceFolder) {
     return;
   }
@@ -128,6 +131,34 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
   }
 }
 
+async function configurePylanceTipPath(context: vscode.ExtensionContext): Promise<void> {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders) {
+    return;
+  }
+
+  if (folders.length !== 1) {
+    return;
+  }
+
+  const stubRoot = vscode.Uri.joinPath(context.extensionUri, 'resources', 'pylance').fsPath;
+
+  for (const folder of folders) {
+    const analysisConfig = vscode.workspace.getConfiguration('python.analysis', folder.uri);
+    const existingExtraPaths = analysisConfig.get<string[]>('extraPaths') ?? [];
+
+    if (existingExtraPaths.includes(stubRoot)) {
+      continue;
+    }
+
+    await analysisConfig.update(
+      'extraPaths',
+      [...existingExtraPaths, stubRoot],
+      vscode.ConfigurationTarget.WorkspaceFolder
+    );
+  }
+}
+
 async function stopServer(): Promise<void> {
   if (!serverProcess) {
     updateStatusBar();
@@ -165,7 +196,7 @@ async function openServerUrl(): Promise<void> {
   await vscode.env.openExternal(vscode.Uri.parse(serverUrl));
 }
 
-async function getSingleWorkspaceFolder(): Promise<vscode.WorkspaceFolder | undefined> {
+function getSingleWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
   const folders = vscode.workspace.workspaceFolders;
 
   if (!folders || folders.length === 0) {
@@ -177,10 +208,8 @@ async function getSingleWorkspaceFolder(): Promise<vscode.WorkspaceFolder | unde
     return folders[0];
   }
 
-  const picked = await vscode.window.showWorkspaceFolderPick({
-    placeHolder: 'Select the folder to run as a TIP Server project'
-  });
-  return picked;
+  void vscode.window.showErrorMessage('TIP Server works with one opened folder at a time. Please open the project folder directly.');
+  return undefined;
 }
 
 async function resolvePythonExecutable(resource: vscode.Uri): Promise<string> {
