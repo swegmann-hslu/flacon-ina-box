@@ -1,0 +1,9 @@
+node_modules/
+src/
+.vscode/
+.vscode-test/
+*.vsix
+*.swp
+**/__pycache__/
+tsconfig.json
+package-lock.json

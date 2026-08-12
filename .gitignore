@@ -1,2 +1,6 @@
 *.swp
 **/__pycache__/
+node_modules/
+out/
+.vscode-test/
+*.vsix

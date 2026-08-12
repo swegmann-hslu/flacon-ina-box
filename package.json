@@ -1,0 +1,58 @@
+{
+  "name": "tip-server",
+  "displayName": "TIP Server",
+  "description": "Run the current folder as a tiny Python-based teaching web application.",
+  "version": "0.0.1",
+  "publisher": "tip-course",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Education",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:tipServer.start",
+    "onCommand:tipServer.stop",
+    "onCommand:tipServer.toggle",
+    "onCommand:tipServer.open"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "extensionDependencies": [
+    "ms-python.python"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "tipServer.start",
+        "title": "TIP Server: Start"
+      },
+      {
+        "command": "tipServer.stop",
+        "title": "TIP Server: Stop"
+      },
+      {
+        "command": "tipServer.toggle",
+        "title": "TIP Server: Start/Stop"
+      },
+      {
+        "command": "tipServer.open",
+        "title": "TIP Server: Open in Browser"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.5"
+  }
+}
