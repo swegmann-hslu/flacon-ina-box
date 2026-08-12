@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+}
+
+main {
+  max-width: 720px;
+  margin: 64px auto;
+  padding: 0 24px;
+}
+
+h1 {
+  font-size: 36px;
+}
+
+p {
+  line-height: 1.5;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+a {
+  color: white;
+  background: #246bfe;
+  padding: 10px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+}
