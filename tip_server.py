@@ -27,10 +27,9 @@ import importlib.util
 import inspect
 import mimetypes
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from types import ModuleType
 from typing import Callable
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -46,6 +45,9 @@ class Request:
     query_all: dict[str, list[str]]
     method: str
     headers: object
+    body: str = ""
+    form: dict[str, str] = field(default_factory=dict)
+    form_all: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -118,17 +120,35 @@ def _safe_static_path(static_dir: Path, request_path: str) -> Path | None:
     return None
 
 
-def _make_request(handler: BaseHTTPRequestHandler) -> Request:
+def _make_request(handler: BaseHTTPRequestHandler, body: str = "") -> Request:
     parsed = urlparse(handler.path)
     query_all = parse_qs(parsed.query)
     query = {key: values[-1] for key, values in query_all.items() if values}
+    form_all: dict[str, list[str]] = {}
+
+    content_type = handler.headers.get("Content-Type", "")
+    if content_type.startswith("application/x-www-form-urlencoded"):
+        form_all = parse_qs(body)
+
     return Request(
         path=parsed.path,
         query=query,
         query_all=query_all,
         method=handler.command,
         headers=handler.headers,
+        body=body,
+        form={key: values[-1] for key, values in form_all.items() if values},
+        form_all=form_all,
     )
+
+
+def _read_body(handler: BaseHTTPRequestHandler) -> str:
+    content_length = int(handler.headers.get("Content-Length", "0"))
+    if content_length == 0:
+        return ""
+
+    body_bytes = handler.rfile.read(content_length)
+    return body_bytes.decode("utf-8")
 
 
 def _call_route(handler_function: Callable[..., object], request: Request) -> object:
@@ -211,15 +231,22 @@ def _make_handler(project_dir: Path) -> type[BaseHTTPRequestHandler]:
     class TipRequestHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             request = _make_request(self)
+            self._handle_request(request, serve_static=True)
 
-            static_file = _safe_static_path(static_dir, request.path)
-            if static_file is not None:
-                _send_file(self, static_file)
-                return
+        def do_POST(self) -> None:
+            request = _make_request(self, _read_body(self))
+            self._handle_request(request, serve_static=False)
+
+        def _handle_request(self, request: Request, serve_static: bool) -> None:
+            if serve_static:
+                static_file = _safe_static_path(static_dir, request.path)
+                if static_file is not None:
+                    _send_file(self, static_file)
+                    return
 
             handler_function = ROUTES.get(request.path)
             if handler_function is None:
-                _send_error_page(self, 404, "Not Found", f"No static file or route for {request.path}")
+                _send_error_page(self, 404, "Not Found", f"No route for {request.method} {request.path}")
                 return
 
             try:

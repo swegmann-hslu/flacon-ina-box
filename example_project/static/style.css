@@ -33,3 +33,25 @@ a {
   border-radius: 6px;
   text-decoration: none;
 }
+
+form {
+  display: grid;
+  gap: 14px;
+  max-width: 420px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+}
+
+input,
+textarea {
+  font: inherit;
+  padding: 8px;
+}
+
+button {
+  width: fit-content;
+  padding: 10px 14px;
+}
