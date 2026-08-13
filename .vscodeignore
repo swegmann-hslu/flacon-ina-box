@@ -2,6 +2,7 @@ node_modules/
 src/
 .vscode/
 .vscode-test/
+scripts/
 *.vsix
 *.swp
 **/__pycache__/

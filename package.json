@@ -46,8 +46,9 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "sync-tip": "node scripts/sync-tip-resources.js",
+    "compile": "npm run sync-tip && tsc -p ./",
+    "watch": "npm run sync-tip && tsc -watch -p ./",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
