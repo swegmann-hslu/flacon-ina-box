@@ -50,13 +50,11 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('tipServer.stop', stopServer),
     vscode.commands.registerCommand('tipServer.toggle', () => toggleServer(context)),
     vscode.commands.registerCommand('tipServer.open', openServerUrl),
-    vscode.workspace.onDidChangeWorkspaceFolders(() => configurePylanceTipPath(context))
+    vscode.commands.registerCommand('tipServer.fixPylanceTipPath', () => configurePylanceTipPath(context))
   );
 
   updateStatusBar();
   statusBarItem.show();
-
-  void configurePylanceTipPath(context);
 }
 
 export async function deactivate(): Promise<void> {
@@ -134,10 +132,12 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
 async function configurePylanceTipPath(context: vscode.ExtensionContext): Promise<void> {
   const folders = vscode.workspace.workspaceFolders;
   if (!folders) {
+    void vscode.window.showErrorMessage('Open a folder before configuring Pylance for TIP Server.');
     return;
   }
 
   if (folders.length !== 1) {
+    void vscode.window.showErrorMessage('TIP Server works with one opened folder at a time. Please open the project folder directly.');
     return;
   }
 
@@ -148,6 +148,7 @@ async function configurePylanceTipPath(context: vscode.ExtensionContext): Promis
     const existingExtraPaths = analysisConfig.get<string[]>('extraPaths') ?? [];
 
     if (existingExtraPaths.includes(stubRoot)) {
+      void vscode.window.showInformationMessage('Pylance is already configured for TIP Server in this workspace.');
       continue;
     }
 
@@ -156,6 +157,8 @@ async function configurePylanceTipPath(context: vscode.ExtensionContext): Promis
       [...existingExtraPaths, stubRoot],
       vscode.ConfigurationTarget.WorkspaceFolder
     );
+
+    void vscode.window.showInformationMessage('Configured Pylance for TIP Server in this workspace.');
   }
 }
 

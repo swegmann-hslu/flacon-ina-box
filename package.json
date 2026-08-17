@@ -16,7 +16,8 @@
     "onCommand:tipServer.start",
     "onCommand:tipServer.stop",
     "onCommand:tipServer.toggle",
-    "onCommand:tipServer.open"
+    "onCommand:tipServer.open",
+    "onCommand:tipServer.fixPylanceTipPath"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -42,6 +43,10 @@
       {
         "command": "tipServer.open",
         "title": "TIP Server: Open in Browser"
+      },
+      {
+        "command": "tipServer.fixPylanceTipPath",
+        "title": "TIP Server: Fix Pylance warning for 'tip'"
       }
     ]
   },
