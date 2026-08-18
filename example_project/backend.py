@@ -1,6 +1,6 @@
 import html
+from flacon import html_page, route, text
 
-from tip import html_page, route, text
 
 
 @route("/hello")

@@ -1,9 +1,18 @@
 {
-  "name": "tip-server",
-  "displayName": "TIP Server",
-  "description": "Run the current folder as a tiny Python-based teaching web application.",
+  "name": "flacon-in-a-box",
+  "displayName": "Flacon in a Box",
+  "description": "Run the current folder as a tiny Flask-inspired Python teaching web application.",
   "version": "0.0.1",
-  "publisher": "tip-course",
+  "publisher": "flacon",
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "flacon",
+    "flask",
+    "teaching",
+    "education",
+    "python",
+    "web"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -13,11 +22,11 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:tipServer.start",
-    "onCommand:tipServer.stop",
-    "onCommand:tipServer.toggle",
-    "onCommand:tipServer.open",
-    "onCommand:tipServer.fixPylanceTipPath"
+    "onCommand:flacon.start",
+    "onCommand:flacon.stop",
+    "onCommand:flacon.toggle",
+    "onCommand:flacon.open",
+    "onCommand:flacon.fixPylancePath"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -29,31 +38,31 @@
   "contributes": {
     "commands": [
       {
-        "command": "tipServer.start",
-        "title": "TIP Server: Start"
+        "command": "flacon.start",
+        "title": "Flacon: Start"
       },
       {
-        "command": "tipServer.stop",
-        "title": "TIP Server: Stop"
+        "command": "flacon.stop",
+        "title": "Flacon: Stop"
       },
       {
-        "command": "tipServer.toggle",
-        "title": "TIP Server: Start/Stop"
+        "command": "flacon.toggle",
+        "title": "Flacon: Start/Stop"
       },
       {
-        "command": "tipServer.open",
-        "title": "TIP Server: Open in Browser"
+        "command": "flacon.open",
+        "title": "Flacon: Open in Browser"
       },
       {
-        "command": "tipServer.fixPylanceTipPath",
-        "title": "TIP Server: Fix Pylance warning for 'tip'"
+        "command": "flacon.fixPylancePath",
+        "title": "Flacon: Fix Pylance warning for 'flacon'"
       }
     ]
   },
   "scripts": {
-    "sync-tip": "node scripts/sync-tip-resources.js",
-    "compile": "npm run sync-tip && tsc -p ./",
-    "watch": "npm run sync-tip && tsc -watch -p ./",
+    "sync-flacon": "node scripts/sync-flacon-resources.js",
+    "compile": "npm run sync-flacon && tsc -p ./",
+    "watch": "npm run sync-flacon && tsc -watch -p ./",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

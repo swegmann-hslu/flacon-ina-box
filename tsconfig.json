@@ -8,6 +8,10 @@
     ],
     "sourceMap": true,
     "rootDir": "src",
+    "types": [
+      "node",
+      "vscode"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true

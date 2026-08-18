@@ -1,9 +1,9 @@
-# TIP Server
+# Flacon in a Box
 
-TIP Server is a small VS Code extension for running the currently opened folder
-as a Python-based teaching web application.
+Flacon in a Box is a small VS Code extension for running the currently opened
+folder as a Flask-inspired Python teaching web application.
 
-The extension bundles `resources/tip_server.py` and starts it with the selected
+The extension bundles `resources/flacon_server.py` and starts it with the selected
 Python interpreter from the Microsoft Python extension when available.
 
 ## Project Layout
@@ -19,7 +19,7 @@ my_project/
 ## Backend Example
 
 ```python
-from tip import route
+from flacon import route
 
 @route("/hello")
 def hello():

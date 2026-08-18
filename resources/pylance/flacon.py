@@ -2,7 +2,7 @@
 A tiny teaching web server for introductory frontend/backend exercises.
 
 Run:
-    python tip_server.py path/to/project
+    python flacon_server.py path/to/project
 
 Expected project layout:
     project/
@@ -12,7 +12,7 @@ Expected project layout:
       backend.py
 
 In backend.py:
-    from tip import route
+    from flacon import route
 
     @route("/hello")
     def hello():
@@ -91,8 +91,10 @@ def _load_backend(project_dir: Path) -> None:
     if not backend_file.exists():
         return
 
-    # Allows student code to say: from tip import route
-    sys.modules["tip"] = sys.modules[__name__]
+    # Allows student code to say: from flacon import route.
+    sys.modules["flacon"] = sys.modules[__name__]
+    # Keep older course projects working while the public name moves to Flacon.
+    sys.modules.setdefault("tip", sys.modules[__name__])
 
     spec = importlib.util.spec_from_file_location("student_backend", backend_file)
     if spec is None or spec.loader is None:
@@ -228,7 +230,7 @@ def _send_error_page(handler: BaseHTTPRequestHandler, status: int, title: str, d
 def _make_handler(project_dir: Path) -> type[BaseHTTPRequestHandler]:
     static_dir = project_dir / "static"
 
-    class TipRequestHandler(BaseHTTPRequestHandler):
+    class FlaconRequestHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             request = _make_request(self)
             self._handle_request(request, serve_static=True)
@@ -258,7 +260,7 @@ def _make_handler(project_dir: Path) -> type[BaseHTTPRequestHandler]:
         def log_message(self, format: str, *args: object) -> None:
             sys.stderr.write(f"{self.address_string()} - {format % args}\n")
 
-    return TipRequestHandler
+    return FlaconRequestHandler
 
 
 def _start_server(project_dir: Path, ports: tuple[int, ...]) -> None:

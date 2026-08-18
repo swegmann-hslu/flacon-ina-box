@@ -33,24 +33,24 @@ type PythonExtensionApi = {
 };
 
 export function activate(context: vscode.ExtensionContext): void {
-  outputChannel = vscode.window.createOutputChannel('TIP Server');
+  outputChannel = vscode.window.createOutputChannel('Flacon');
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-  statusBarItem.name = 'TIP Server';
+  statusBarItem.name = 'Flacon';
   stopStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
-  stopStatusBarItem.name = 'Stop TIP Server';
+  stopStatusBarItem.name = 'Stop Flacon';
   stopStatusBarItem.text = '$(debug-stop)';
-  stopStatusBarItem.tooltip = 'Stop TIP Server';
-  stopStatusBarItem.command = 'tipServer.stop';
+  stopStatusBarItem.tooltip = 'Stop Flacon';
+  stopStatusBarItem.command = 'flacon.stop';
 
   context.subscriptions.push(
     outputChannel,
     statusBarItem,
     stopStatusBarItem,
-    vscode.commands.registerCommand('tipServer.start', () => startServer(context)),
-    vscode.commands.registerCommand('tipServer.stop', stopServer),
-    vscode.commands.registerCommand('tipServer.toggle', () => toggleServer(context)),
-    vscode.commands.registerCommand('tipServer.open', openServerUrl),
-    vscode.commands.registerCommand('tipServer.fixPylanceTipPath', () => configurePylanceTipPath(context))
+    vscode.commands.registerCommand('flacon.start', () => startServer(context)),
+    vscode.commands.registerCommand('flacon.stop', stopServer),
+    vscode.commands.registerCommand('flacon.toggle', () => toggleServer(context)),
+    vscode.commands.registerCommand('flacon.open', openServerUrl),
+    vscode.commands.registerCommand('flacon.fixPylancePath', () => configurePylancePath(context))
   );
 
   updateStatusBar();
@@ -81,17 +81,17 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
     return;
   }
 
-  const serverScript = vscode.Uri.joinPath(context.extensionUri, 'resources', 'tip_server.py').fsPath;
+  const serverScript = vscode.Uri.joinPath(context.extensionUri, 'resources', 'flacon_server.py').fsPath;
   const pythonExecutable = await resolvePythonExecutable(workspaceFolder.uri);
   const ports = await getAvailablePorts(DEFAULT_PORTS);
 
   if (ports.length === 0) {
-    void vscode.window.showErrorMessage(`TIP Server could not find a free port among ${DEFAULT_PORTS.join(', ')}.`);
+    void vscode.window.showErrorMessage(`Flacon could not find a free port among ${DEFAULT_PORTS.join(', ')}.`);
     return;
   }
 
   outputChannel.clear();
-  outputChannel.appendLine(`Starting TIP Server for ${workspaceFolder.uri.fsPath}`);
+  outputChannel.appendLine(`Starting Flacon for ${workspaceFolder.uri.fsPath}`);
   outputChannel.appendLine(`Python: ${pythonExecutable}`);
   outputChannel.appendLine(`Script: ${serverScript}`);
 
@@ -106,15 +106,15 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
   );
 
   serverProcess.once('exit', (code, signal) => {
-    outputChannel.appendLine(`TIP Server stopped. Exit code: ${code ?? 'none'}, signal: ${signal ?? 'none'}`);
+    outputChannel.appendLine(`Flacon stopped. Exit code: ${code ?? 'none'}, signal: ${signal ?? 'none'}`);
     serverProcess = undefined;
     serverUrl = undefined;
     updateStatusBar();
   });
 
   serverProcess.once('error', error => {
-    outputChannel.appendLine(`Could not start TIP Server: ${error.message}`);
-    void vscode.window.showErrorMessage(`Could not start TIP Server: ${error.message}`);
+    outputChannel.appendLine(`Could not start Flacon: ${error.message}`);
+    void vscode.window.showErrorMessage(`Could not start Flacon: ${error.message}`);
     serverProcess = undefined;
     serverUrl = undefined;
     updateStatusBar();
@@ -125,19 +125,19 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
   updateStatusBar();
 
   if (serverUrl) {
-    void vscode.window.showInformationMessage(`TIP Server started at ${serverUrl}`);
+    void vscode.window.showInformationMessage(`Flacon started at ${serverUrl}`);
   }
 }
 
-async function configurePylanceTipPath(context: vscode.ExtensionContext): Promise<void> {
+async function configurePylancePath(context: vscode.ExtensionContext): Promise<void> {
   const folders = vscode.workspace.workspaceFolders;
   if (!folders) {
-    void vscode.window.showErrorMessage('Open a folder before configuring Pylance for TIP Server.');
+    void vscode.window.showErrorMessage('Open a folder before configuring Pylance for Flacon.');
     return;
   }
 
   if (folders.length !== 1) {
-    void vscode.window.showErrorMessage('TIP Server works with one opened folder at a time. Please open the project folder directly.');
+    void vscode.window.showErrorMessage('Flacon works with one opened folder at a time. Please open the project folder directly.');
     return;
   }
 
@@ -148,7 +148,7 @@ async function configurePylanceTipPath(context: vscode.ExtensionContext): Promis
     const existingExtraPaths = analysisConfig.get<string[]>('extraPaths') ?? [];
 
     if (existingExtraPaths.includes(stubRoot)) {
-      void vscode.window.showInformationMessage('Pylance is already configured for TIP Server in this workspace.');
+      void vscode.window.showInformationMessage('Pylance is already configured for Flacon in this workspace.');
       continue;
     }
 
@@ -158,7 +158,7 @@ async function configurePylanceTipPath(context: vscode.ExtensionContext): Promis
       vscode.ConfigurationTarget.WorkspaceFolder
     );
 
-    void vscode.window.showInformationMessage('Configured Pylance for TIP Server in this workspace.');
+    void vscode.window.showInformationMessage('Configured Pylance for Flacon in this workspace.');
   }
 }
 
@@ -192,7 +192,7 @@ async function stopServer(): Promise<void> {
 
 async function openServerUrl(): Promise<void> {
   if (!serverUrl) {
-    void vscode.window.showInformationMessage('TIP Server is not running.');
+    void vscode.window.showInformationMessage('Flacon is not running.');
     return;
   }
 
@@ -203,7 +203,7 @@ function getSingleWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
   const folders = vscode.workspace.workspaceFolders;
 
   if (!folders || folders.length === 0) {
-    void vscode.window.showErrorMessage('Open a folder before starting TIP Server.');
+    void vscode.window.showErrorMessage('Open a folder before starting Flacon.');
     return undefined;
   }
 
@@ -211,7 +211,7 @@ function getSingleWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return folders[0];
   }
 
-  void vscode.window.showErrorMessage('TIP Server works with one opened folder at a time. Please open the project folder directly.');
+  void vscode.window.showErrorMessage('Flacon works with one opened folder at a time. Please open the project folder directly.');
   return undefined;
 }
 
@@ -296,23 +296,23 @@ function updateStatusBar(): void {
   }
 
   if (serverProcess && serverUrl) {
-    statusBarItem.text = `$(globe) TIP ${serverUrl}`;
-    statusBarItem.tooltip = 'Open TIP Server in browser';
-    statusBarItem.command = 'tipServer.open';
+    statusBarItem.text = `$(globe) Flacon ${serverUrl}`;
+    statusBarItem.tooltip = 'Open Flacon in browser';
+    statusBarItem.command = 'flacon.open';
     stopStatusBarItem.show();
     return;
   }
 
   if (serverProcess) {
-    statusBarItem.text = '$(sync~spin) TIP Starting';
-    statusBarItem.tooltip = 'TIP Server is starting';
+    statusBarItem.text = '$(sync~spin) Flacon Starting';
+    statusBarItem.tooltip = 'Flacon is starting';
     statusBarItem.command = undefined;
     stopStatusBarItem.show();
     return;
   }
 
-  statusBarItem.text = '$(play) TIP Server';
-  statusBarItem.tooltip = 'Start TIP Server for the current folder';
-  statusBarItem.command = 'tipServer.start';
+  statusBarItem.text = '$(play) Flacon';
+  statusBarItem.tooltip = 'Start Flacon for the current folder';
+  statusBarItem.command = 'flacon.start';
   stopStatusBarItem.hide();
 }
