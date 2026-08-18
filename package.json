@@ -3,8 +3,17 @@
   "displayName": "Flacon in a Box",
   "description": "Run the current folder as a tiny Flask-inspired Python teaching web application.",
   "version": "0.0.1",
-  "publisher": "flacon",
+  "publisher": "capystudio",
   "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swegmann-hslu/flacon-ina-box.git"
+  },
+  "bugs": {
+    "url": "https://github.com/swegmann-hslu/flacon-ina-box/issues"
+  },
+  "homepage": "https://github.com/swegmann-hslu/flacon-ina-box#readme",
+  "icon": "media/icon.png",
   "keywords": [
     "flacon",
     "flask",
