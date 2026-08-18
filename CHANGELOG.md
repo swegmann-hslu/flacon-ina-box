@@ -2,9 +2,10 @@
 
 All notable changes to the Flacon in a Box extension will be documented in this file.
 
-## 0.0.1
+## 0.1.0
 
-- Initial extension package for running a Flacon project from VS Code.
-- Bundles the Python Flacon runtime.
-- Adds commands to start, stop, toggle, and open the server.
+- First publishable Marketplace version of Flacon in a Box.
+- Bundles the Python Flacon runtime and Pylance import stub.
+- Adds commands to start, stop, toggle, and open the server from VS Code.
 - Adds a command to configure Pylance for `from flacon import ...` imports in the current workspace.
+- Adds Marketplace metadata, GPLv3 license text, support information, changelog, and extension icon.
