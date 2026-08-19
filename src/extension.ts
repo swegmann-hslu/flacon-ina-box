@@ -1,7 +1,6 @@
 import * as cp from 'node:child_process';
 import * as net from 'node:net';
 import * as path from 'node:path';
-import * as readline from 'node:readline';
 import * as vscode from 'vscode';
 
 const DEFAULT_HOST = 'localhost';
@@ -91,6 +90,7 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
   }
 
   outputChannel.clear();
+  outputChannel.show(true);
   outputChannel.appendLine(`Starting Flacon for ${workspaceFolder.uri.fsPath}`);
   outputChannel.appendLine(`Python: ${pythonExecutable}`);
   outputChannel.appendLine(`Script: ${serverScript}`);
@@ -120,8 +120,7 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
     updateStatusBar();
   });
 
-  attachServerOutput(serverProcess);
-  serverUrl = await waitForServerUrl(serverProcess);
+  serverUrl = await attachServerOutput(serverProcess);
   updateStatusBar();
 
   if (serverUrl) {
@@ -261,32 +260,38 @@ function isPortAvailable(port: number): Promise<boolean> {
   });
 }
 
-function attachServerOutput(processToRead: cp.ChildProcessWithoutNullStreams): void {
-  processToRead.stdout.on('data', chunk => outputChannel.append(chunk.toString()));
-  processToRead.stderr.on('data', chunk => outputChannel.append(chunk.toString()));
-}
-
-function waitForServerUrl(processToRead: cp.ChildProcessWithoutNullStreams): Promise<string | undefined> {
+function attachServerOutput(processToRead: cp.ChildProcessWithoutNullStreams): Promise<string | undefined> {
   return new Promise(resolve => {
-    const timeout = setTimeout(() => resolve(undefined), 5000);
-    const lines = readline.createInterface({ input: processToRead.stdout });
+    let resolved = false;
+    let stdoutBuffer = '';
+    const timeout = setTimeout(() => resolveServerUrl(undefined), 5000);
 
-    lines.on('line', line => {
-      const match = line.match(/Serving .+ at (http:\/\/[^\s]+)/);
+    function resolveServerUrl(url: string | undefined): void {
+      if (resolved) {
+        return;
+      }
+
+      resolved = true;
+      clearTimeout(timeout);
+      resolve(url);
+    }
+
+    processToRead.stdout.on('data', chunk => {
+      const text = chunk.toString();
+      outputChannel.append(text);
+
+      stdoutBuffer += text;
+      const match = stdoutBuffer.match(/Serving .+ at (http:\/\/[^\s]+)/);
       if (!match) {
         return;
       }
 
-      clearTimeout(timeout);
-      lines.close();
-      resolve(match[1]);
+      resolveServerUrl(match[1]);
     });
 
-    processToRead.once('exit', () => {
-      clearTimeout(timeout);
-      lines.close();
-      resolve(undefined);
-    });
+    processToRead.stderr.on('data', chunk => outputChannel.append(chunk.toString()));
+
+    processToRead.once('exit', () => resolveServerUrl(undefined));
   });
 }
 

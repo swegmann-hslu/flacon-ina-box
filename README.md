@@ -39,6 +39,11 @@ def contact(request):
     return f"<h1>Hello, {name}!</h1>"
 ```
 
+## Backend API
+
+Any output created with `print()` will be visible in the "Flacon" Output-channel
+of VSCode.
+
 ## Development
 
 The canonical Python runtime is `resources/flacon_server.py`. During
