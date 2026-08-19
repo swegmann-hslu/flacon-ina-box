@@ -91,6 +91,11 @@ def _load_backend(project_dir: Path) -> None:
     if not backend_file.exists():
         return
 
+    project_path = str(project_dir)
+    if project_path in sys.path:
+        sys.path.remove(project_path)
+    sys.path.insert(0, project_path)
+
     # Allows student code to say: from flacon import route.
     sys.modules["flacon"] = sys.modules[__name__]
     # Keep older course projects working while the public name moves to Flacon.
