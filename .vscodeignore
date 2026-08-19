@@ -8,3 +8,5 @@ scripts/
 **/__pycache__/
 tsconfig.json
 package-lock.json
+
+example_project/*.db
