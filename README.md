@@ -41,6 +41,11 @@ def contact(request):
 
 ## Development
 
+The canonical Python runtime is `resources/flacon_server.py`. During
+`npm run compile`, it is copied to `resources/pylance/flacon.py` so Pylance can
+resolve `from flacon import ...` in student projects. `vsce package` also runs
+this compile step through `vscode:prepublish`.
+
 Install dependencies:
 
 ```powershell
