@@ -2,7 +2,7 @@
   "name": "flacon-in-a-box",
   "displayName": "Flacon in a Box",
   "description": "Run the current folder as a tiny Flask-inspired Python teaching web application.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "capystudio",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
