@@ -5,6 +5,24 @@ import * as vscode from 'vscode';
 
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_PORTS = [80, 8000, 8080];
+const STARTER_BACKEND = `from flacon import html_page, route
+
+
+@route("/hello")
+def hello():
+    return html_page("<h1>Hello from your Flacon server</h1>")
+`;
+const STARTER_INDEX_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>My Flacon Project</title>
+</head>
+<body>
+  <h1>Hello from your Flacon server</h1>
+</body>
+</html>
+`;
 
 let serverProcess: cp.ChildProcessWithoutNullStreams | undefined;
 let serverUrl: string | undefined;
@@ -49,6 +67,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('flacon.stop', stopServer),
     vscode.commands.registerCommand('flacon.toggle', () => toggleServer(context)),
     vscode.commands.registerCommand('flacon.open', openServerUrl),
+    vscode.commands.registerCommand('flacon.setupProject', setupProjectStructure),
     vscode.commands.registerCommand('flacon.fixPylancePath', () => configurePylancePath(context))
   );
 
@@ -158,6 +177,76 @@ async function configurePylancePath(context: vscode.ExtensionContext): Promise<v
     );
 
     void vscode.window.showInformationMessage('Configured Pylance for Flacon in this workspace.');
+  }
+}
+
+async function setupProjectStructure(): Promise<void> {
+  try {
+    const workspaceFolder = getSingleWorkspaceFolder();
+    if (!workspaceFolder) {
+      return;
+    }
+
+    const root = workspaceFolder.uri;
+    const staticDir = vscode.Uri.joinPath(root, 'static');
+    const backendFile = vscode.Uri.joinPath(root, 'backend.py');
+    const indexFile = vscode.Uri.joinPath(staticDir, 'index.html');
+    const created: string[] = [];
+
+    if (await createDirectoryIfMissing(staticDir)) {
+      created.push('static/');
+    }
+
+    if (await createFileIfMissing(backendFile, STARTER_BACKEND)) {
+      created.push('backend.py');
+    }
+
+    if (await createFileIfMissing(indexFile, STARTER_INDEX_HTML)) {
+      created.push('static/index.html');
+    }
+
+    if (created.length === 0) {
+      void vscode.window.showInformationMessage('Flacon project structure is already set up.');
+      return;
+    }
+
+    void vscode.window.showInformationMessage(`Created Flacon starter files: ${created.join(', ')}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(`Could not set up Flacon project structure: ${message}`);
+    return;
+  }
+}
+
+async function createDirectoryIfMissing(uri: vscode.Uri): Promise<boolean> {
+  const existing = await statIfExists(uri);
+  if (existing) {
+    if ((existing.type & vscode.FileType.Directory) === 0) {
+      throw new Error(`Cannot create folder because a file already exists at ${uri.fsPath}`);
+    }
+
+    return false;
+  }
+
+  await vscode.workspace.fs.createDirectory(uri);
+  return true;
+}
+
+async function createFileIfMissing(uri: vscode.Uri, content: string): Promise<boolean> {
+  const existing = await statIfExists(uri);
+  if (existing) {
+    return false;
+  }
+
+  await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+  return true;
+}
+
+async function statIfExists(uri: vscode.Uri): Promise<vscode.FileStat | undefined> {
+  try {
+    return await vscode.workspace.fs.stat(uri);
+  } catch {
+    return undefined;
   }
 }
 
