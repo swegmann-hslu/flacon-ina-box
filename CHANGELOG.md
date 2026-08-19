@@ -2,6 +2,10 @@
 
 All notable changes to the Flacon in a Box extension will be documented in this file.
 
+## Next release
+
+- Extends the list of known status code messages for responses
+
 ## 0.1.0
 
 - First publishable Marketplace version of Flacon in a Box.
