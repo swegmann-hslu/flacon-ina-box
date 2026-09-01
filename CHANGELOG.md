@@ -2,6 +2,10 @@
 
 All notable changes to the Flacon in a Box extension will be documented in this file.
 
+## Unreleased
+
+- Restarts the running Flacon server automatically when the workspace root `backend.py` file is saved, created, or deleted.
+
 ## 0.2.0 - 2026-08-19
 
 - Adds a command to create a starter Flacon project structure without overwriting existing files.

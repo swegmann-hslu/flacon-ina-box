@@ -17,6 +17,12 @@ browser. Use the stop button to shut down the Flacon server again.
 
 ![Flacon Running](media/flacon_running.png)
 
+While Flacon is running, the extension watches the `backend.py` file in the
+root of the opened project. Saving, creating, or deleting that file
+automatically restarts the server so backend route changes are picked up
+without using the stop and start buttons. Imported Python files are not watched
+yet; restart Flacon manually after changing helper modules.
+
 You can check the output of the Flacon server in the VS Code `Output` panel by
 selecting the `Flacon` output channel. This is also where you will see output
 from `print()` calls in your `backend.py` file.

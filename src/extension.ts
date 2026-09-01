@@ -29,6 +29,9 @@ let serverUrl: string | undefined;
 let statusBarItem: vscode.StatusBarItem;
 let stopStatusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+let backendWatcher: vscode.FileSystemWatcher | undefined;
+let restartTimer: NodeJS.Timeout | undefined;
+let isRestartingServer = false;
 
 type PythonEnvironmentPath = {
   path?: string;
@@ -68,14 +71,19 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('flacon.toggle', () => toggleServer(context)),
     vscode.commands.registerCommand('flacon.open', openServerUrl),
     vscode.commands.registerCommand('flacon.setupProject', setupProjectStructure),
-    vscode.commands.registerCommand('flacon.fixPylancePath', () => configurePylancePath(context))
+    vscode.commands.registerCommand('flacon.fixPylancePath', () => configurePylancePath(context)),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => registerBackendWatcher(context))
   );
 
+  registerBackendWatcher(context);
   updateStatusBar();
   statusBarItem.show();
 }
 
 export async function deactivate(): Promise<void> {
+  clearPendingRestart();
+  backendWatcher?.dispose();
+  backendWatcher = undefined;
   await stopServer();
 }
 
@@ -144,6 +152,60 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
 
   if (serverUrl) {
     void vscode.window.showInformationMessage(`Flacon started at ${serverUrl}`);
+  }
+}
+
+function registerBackendWatcher(context: vscode.ExtensionContext): void {
+  backendWatcher?.dispose();
+  backendWatcher = undefined;
+
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders || folders.length !== 1) {
+    return;
+  }
+
+  const backendPattern = new vscode.RelativePattern(folders[0], 'backend.py');
+  backendWatcher = vscode.workspace.createFileSystemWatcher(backendPattern);
+  backendWatcher.onDidChange(() => scheduleServerRestart(context, 'backend.py changed'));
+  backendWatcher.onDidCreate(() => scheduleServerRestart(context, 'backend.py created'));
+  backendWatcher.onDidDelete(() => scheduleServerRestart(context, 'backend.py deleted'));
+  context.subscriptions.push(backendWatcher);
+}
+
+function scheduleServerRestart(context: vscode.ExtensionContext, reason: string): void {
+  if (!serverProcess || !serverUrl || isRestartingServer) {
+    return;
+  }
+
+  clearPendingRestart();
+  restartTimer = setTimeout(() => {
+    restartTimer = undefined;
+    void restartServer(context, reason);
+  }, 300);
+}
+
+function clearPendingRestart(): void {
+  if (!restartTimer) {
+    return;
+  }
+
+  clearTimeout(restartTimer);
+  restartTimer = undefined;
+}
+
+async function restartServer(context: vscode.ExtensionContext, reason: string): Promise<void> {
+  if (isRestartingServer || !serverProcess) {
+    return;
+  }
+
+  isRestartingServer = true;
+  outputChannel.appendLine(`Restarting Flacon: ${reason}.`);
+
+  try {
+    await stopServer();
+    await startServer(context);
+  } finally {
+    isRestartingServer = false;
   }
 }
 
