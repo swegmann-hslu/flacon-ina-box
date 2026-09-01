@@ -5,6 +5,7 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 ## Unreleased
 
 - Restarts the running Flacon server automatically when the workspace root `backend.py` file is saved, created, or deleted.
+- Adds `render_template()` for small Jinja-inspired templates with value insertion, loops, conditionals, and includes.
 
 ## 0.2.0 - 2026-08-19
 

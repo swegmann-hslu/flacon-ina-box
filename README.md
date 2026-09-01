@@ -94,7 +94,7 @@ Backend routes are written in `backend.py`. Import the Flacon helpers you want
 to use at the top of the file:
 
 ```python
-from flacon import html_page, json, route, text
+from flacon import html_page, json, render_template, route, text
 ```
 
 ### Routes
@@ -182,6 +182,62 @@ return html_page("<h1>Forbidden</h1>", 403)
 
 Any output created with `print()` will be visible in the `Flacon` output channel
 in VS Code.
+
+### Templates
+
+Use `render_template("filename.html", name=value)` to render an HTML template
+from a `templates/` folder in the root of your project:
+
+```text
+my_project/
+  templates/
+    hello.html
+  backend.py
+```
+
+```python
+from flacon import render_template, route
+
+@route("/hello")
+def hello():
+    return render_template("hello.html", name="Ada")
+```
+
+The template receives the keyword arguments passed to `render_template`:
+
+```html
+<h1>Hello, {{ name }}</h1>
+```
+
+Flacon templates support a small subset of Jinja-style syntax:
+
+| Syntax | Meaning |
+| --- | --- |
+| `{{ expression }}` | Inserts the value of a Python expression, HTML-escaped. |
+| `{% for item in items %}` ... `{% endfor %}` | Repeats the block for each value in an iterable. |
+| `{% if condition %}` ... `{% else %}` ... `{% endif %}` | Renders one block or the other based on a Python expression. The `else` block is optional. |
+| `{% include 'other.html' %}` | Renders another template file with the same variables. |
+
+Example:
+
+```html
+{% include 'header.html' %}
+
+{% if users %}
+  <ul>
+  {% for user in users %}
+    <li>{{ user }}</li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No users yet.</p>
+{% endif %}
+```
+
+This is intentionally not a full Jinja implementation. Template expressions are
+plain Python expressions evaluated with the variables passed to
+`render_template`. Included files must stay inside the project `templates/`
+folder.
 
 ## Development
 

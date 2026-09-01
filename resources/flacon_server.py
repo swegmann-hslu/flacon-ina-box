@@ -19,23 +19,26 @@ In backend.py:
         return "Hello from Python"
 """
 
-from __future__ import annotations
-
 import argparse
+import ast
 import html
 import importlib.util
 import inspect
 import mimetypes
+import re
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Callable
+from typing import Callable, TypeAlias
 from urllib.parse import parse_qs, unquote, urlparse
-
 
 DEFAULT_PORTS = (80, 8000, 8080)
 ROUTES: dict[str, Callable[..., object]] = {}
+PROJECT_DIR: Path | None = None
+TEMPLATE_TOKEN_RE = re.compile(r"({{.*?}}|{%.*?%})", re.DOTALL)
+FOR_TAG_RE = re.compile(r"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s+(.+)$", re.DOTALL)
 
 
 @dataclass
@@ -86,7 +89,19 @@ def redirect(location: str, status: int = 302) -> Response:
     return Response("", status=status, headers={"Location": location})
 
 
+def render_template(template_name: str, **context: object) -> str:
+    """Render a template from the project's templates folder."""
+    if PROJECT_DIR is None:
+        raise RuntimeError("Templates are only available after Flacon has loaded a project.")
+
+    templates_dir = PROJECT_DIR / "templates"
+    return _render_template_file(template_name, context, templates_dir, templates_dir, [])
+
+
 def _load_backend(project_dir: Path) -> None:
+    global PROJECT_DIR
+
+    PROJECT_DIR = project_dir
     backend_file = project_dir / "backend.py"
     if not backend_file.exists():
         return
@@ -108,6 +123,190 @@ def _load_backend(project_dir: Path) -> None:
     module = importlib.util.module_from_spec(spec)
     sys.modules["student_backend"] = module
     spec.loader.exec_module(module)
+
+
+TemplateNode: TypeAlias = (
+    tuple[str, str]
+    | tuple[str, str, str, list["TemplateNode"]]
+    | tuple[str, str, list["TemplateNode"], list["TemplateNode"]]
+)
+
+
+def _render_template_file(
+    template_name: str,
+    context: dict[str, object],
+    templates_dir: Path,
+    relative_to: Path,
+    stack: list[Path],
+) -> str:
+    template_path = _resolve_template_path(template_name, templates_dir, relative_to)
+
+    if template_path in stack:
+        chain = " -> ".join(path.name for path in [*stack, template_path])
+        raise RuntimeError(f"Template include cycle detected: {chain}")
+
+    source = template_path.read_text(encoding="utf-8")
+    nodes = _parse_template(source, template_path.name)
+    return _render_template_nodes(nodes, dict(context), templates_dir, template_path.parent, [*stack, template_path])
+
+
+def _resolve_template_path(template_name: str, templates_dir: Path, relative_to: Path) -> Path:
+    if not template_name:
+        raise RuntimeError("Template name must not be empty.")
+
+    requested_path = Path(template_name)
+    if requested_path.is_absolute():
+        raise RuntimeError(f"Template paths must be relative: {template_name}")
+
+    base_dir = relative_to if "/" in template_name or "\\" in template_name else templates_dir
+    template_path = (base_dir / requested_path).resolve()
+    templates_root = templates_dir.resolve()
+
+    try:
+        template_path.relative_to(templates_root)
+    except ValueError:
+        raise RuntimeError(f"Template path must stay inside {templates_dir}: {template_name}") from None
+
+    if not template_path.is_file():
+        raise RuntimeError(f"Template not found: {template_name}")
+
+    return template_path
+
+
+def _parse_template(source: str, template_name: str) -> list[TemplateNode]:
+    tokens = TEMPLATE_TOKEN_RE.split(source)
+    nodes, position, end_tag = _parse_template_nodes(tokens, 0, set(), template_name)
+    if end_tag is not None:
+        raise RuntimeError(f"Unexpected template tag {{% {end_tag} %}} in {template_name}.")
+    if position != len(tokens):
+        raise RuntimeError(f"Could not parse template {template_name}.")
+    return nodes
+
+
+def _parse_template_nodes(
+    tokens: list[str],
+    position: int,
+    stop_tags: set[str],
+    template_name: str,
+) -> tuple[list[TemplateNode], int, str | None]:
+    nodes: list[TemplateNode] = []
+
+    while position < len(tokens):
+        token = tokens[position]
+
+        if token.startswith("{{") and token.endswith("}}"):
+            nodes.append(("value", token[2:-2].strip()))
+            position += 1
+            continue
+
+        if token.startswith("{%") and token.endswith("%}"):
+            tag = token[2:-2].strip()
+            tag_name = tag.split(None, 1)[0] if tag else ""
+
+            if tag_name in stop_tags:
+                return nodes, position + 1, tag_name
+
+            if tag_name == "include":
+                nodes.append(("include", tag.removeprefix("include").strip()))
+                position += 1
+                continue
+
+            if tag_name == "for":
+                match = FOR_TAG_RE.match(tag)
+                if match is None:
+                    raise RuntimeError(f"Invalid for tag in {template_name}: {{% {tag} %}}")
+
+                body, position, end_tag = _parse_template_nodes(tokens, position + 1, {"endfor"}, template_name)
+                if end_tag != "endfor":
+                    raise RuntimeError(f"Missing {{% endfor %}} in {template_name}.")
+
+                nodes.append(("for", match.group(1), match.group(2).strip(), body))
+                continue
+
+            if tag_name == "if":
+                condition = tag.removeprefix("if").strip()
+                if not condition:
+                    raise RuntimeError(f"Invalid if tag in {template_name}: {{% {tag} %}}")
+
+                true_body, position, end_tag = _parse_template_nodes(tokens, position + 1, {"else", "endif"}, template_name)
+                false_body: list[TemplateNode] = []
+                if end_tag == "else":
+                    false_body, position, end_tag = _parse_template_nodes(tokens, position, {"endif"}, template_name)
+                if end_tag != "endif":
+                    raise RuntimeError(f"Missing {{% endif %}} in {template_name}.")
+
+                nodes.append(("if", condition, true_body, false_body))
+                continue
+
+            raise RuntimeError(f"Unknown template tag in {template_name}: {{% {tag} %}}")
+
+        if token:
+            nodes.append(("text", token))
+        position += 1
+
+    return nodes, position, None
+
+
+def _render_template_nodes(
+    nodes: list[TemplateNode],
+    context: dict[str, object],
+    templates_dir: Path,
+    relative_to: Path,
+    stack: list[Path],
+) -> str:
+    rendered: list[str] = []
+
+    for node in nodes:
+        node_type = node[0]
+
+        if node_type == "text":
+            rendered.append(node[1])
+        elif node_type == "value":
+            value = _evaluate_template_expression(node[1], context)
+            rendered.append("" if value is None else html.escape(str(value)))
+        elif node_type == "include":
+            included_name = _evaluate_template_name(node[1], context)
+            rendered.append(_render_template_file(included_name, context, templates_dir, relative_to, stack))
+        elif node_type == "for":
+            variable_name = node[1]
+            collection = _evaluate_template_expression(node[2], context)
+            for value in _template_iterable(collection):
+                loop_context = dict(context)
+                loop_context[variable_name] = value
+                rendered.append(_render_template_nodes(node[3], loop_context, templates_dir, relative_to, stack))
+        elif node_type == "if":
+            condition = _evaluate_template_expression(node[1], context)
+            body = node[2] if condition else node[3]
+            rendered.append(_render_template_nodes(body, context, templates_dir, relative_to, stack))
+
+    return "".join(rendered)
+
+
+def _evaluate_template_expression(expression: str, context: dict[str, object]) -> object:
+    if not expression:
+        raise RuntimeError("Template expression must not be empty.")
+
+    globals_for_template = {"__builtins__": {}, "False": False, "None": None, "True": True}
+    return eval(expression, globals_for_template, context)
+
+
+def _evaluate_template_name(expression: str, context: dict[str, object]) -> str:
+    try:
+        value = ast.literal_eval(expression)
+    except (SyntaxError, ValueError):
+        value = _evaluate_template_expression(expression, context)
+
+    if not isinstance(value, str):
+        raise TypeError("Included template name must be a string.")
+    return value
+
+
+def _template_iterable(value: object) -> Iterable[object]:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, Iterable):
+        return value
+    raise RuntimeError(f"Template for loop needs an iterable value, got {type(value).__name__}.")
 
 
 def _safe_static_path(static_dir: Path, request_path: str) -> Path | None:

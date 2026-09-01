@@ -1,5 +1,7 @@
 import html
-from flacon import html_page, route, text
+
+from flacon import html_page, render_template, route, text
+
 
 
 
@@ -17,6 +19,19 @@ def greet(request):
 @route("/plain")
 def plain_text():
     return text("This is plain text from Python.")
+
+
+@route("/showtable")
+def show_table(request):
+    table_name = request.query.get("table")
+    column_names, res = database.get_table_data(table_name)
+    return html_page(
+        render_template(
+            'table.html',
+            table_name=table_name,
+            column_names=column_names,
+            result=res
+        ))
 
 
 @route("/contact")
