@@ -6,6 +6,8 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 
 - Restarts the running Flacon server automatically when the workspace root `backend.py` file is saved, created, or deleted.
 - Adds `render_template()` for small Jinja-inspired templates with value insertion, loops, conditionals, and includes.
+- Routes `PUT`, `DELETE`, `PATCH`, `OPTIONS`, `HEAD`, and custom HTTP methods to backend handlers instead of limiting routing to `GET` and `POST`.
+- Adds `method_not_allowed()` for route handlers that need to return `405 Method Not Allowed` with an optional `Allow` header.
 
 ## 0.2.0 - 2026-08-19
 

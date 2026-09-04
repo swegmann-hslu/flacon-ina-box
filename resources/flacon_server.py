@@ -89,6 +89,16 @@ def redirect(location: str, status: int = 302) -> Response:
     return Response("", status=status, headers={"Location": location})
 
 
+def method_not_allowed(*allowed_methods: str) -> Response:
+    headers = {"Allow": ", ".join(allowed_methods)} if allowed_methods else None
+    return Response(
+        "Method Not Allowed",
+        status=405,
+        content_type="text/plain; charset=utf-8",
+        headers=headers,
+    )
+
+
 def render_template(template_name: str, **context: object) -> str:
     """Render a template from the project's templates folder."""
     if PROJECT_DIR is None:
@@ -406,7 +416,8 @@ def _send_response(handler: BaseHTTPRequestHandler, response: object) -> None:
     for name, value in extra_headers.items():
         handler.send_header(name, value)
     handler.end_headers()
-    handler.wfile.write(body_bytes)
+    if handler.command != "HEAD":
+        handler.wfile.write(body_bytes)
 
 
 def _send_file(handler: BaseHTTPRequestHandler, file_path: Path) -> None:
@@ -417,7 +428,8 @@ def _send_file(handler: BaseHTTPRequestHandler, file_path: Path) -> None:
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(body)))
     handler.end_headers()
-    handler.wfile.write(body)
+    if handler.command != "HEAD":
+        handler.wfile.write(body)
 
 
 def _send_error_page(handler: BaseHTTPRequestHandler, status: int, title: str, detail: str) -> None:
@@ -441,12 +453,35 @@ def _make_handler(project_dir: Path) -> type[BaseHTTPRequestHandler]:
 
     class FlaconRequestHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
-            request = _make_request(self)
-            self._handle_request(request, serve_static=True)
+            self._handle_current_request()
+
+        def do_HEAD(self) -> None:
+            self._handle_current_request()
 
         def do_POST(self) -> None:
-            request = _make_request(self, _read_body(self))
-            self._handle_request(request, serve_static=False)
+            self._handle_current_request()
+
+        def do_PUT(self) -> None:
+            self._handle_current_request()
+
+        def do_DELETE(self) -> None:
+            self._handle_current_request()
+
+        def do_PATCH(self) -> None:
+            self._handle_current_request()
+
+        def do_OPTIONS(self) -> None:
+            self._handle_current_request()
+
+        def __getattr__(self, name: str) -> object:
+            if name.startswith("do_"):
+                return self._handle_current_request
+            raise AttributeError(name)
+
+        def _handle_current_request(self) -> None:
+            body = "" if self.command == "HEAD" else _read_body(self)
+            request = _make_request(self, body)
+            self._handle_request(request, serve_static=self.command in {"GET", "HEAD"})
 
         def _handle_request(self, request: Request, serve_static: bool) -> None:
             if serve_static:

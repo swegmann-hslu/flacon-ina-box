@@ -68,7 +68,7 @@ The following commands are available from the VS Code Command Palette.
 ## Backend Example
 
 ```python
-from flacon import route
+from flacon import method_not_allowed, route
 
 @route("/hello")
 def hello():
@@ -84,6 +84,9 @@ def contact(request):
         </form>
         """
 
+    if request.method != "POST":
+        return method_not_allowed("GET", "POST")
+
     name = request.form.get("name", "friend")
     return f"<h1>Hello, {name}!</h1>"
 ```
@@ -94,7 +97,7 @@ Backend routes are written in `backend.py`. Import the Flacon helpers you want
 to use at the top of the file:
 
 ```python
-from flacon import html_page, json, render_template, route, text
+from flacon import html_page, json, method_not_allowed, render_template, route, text
 ```
 
 ### Routes
@@ -138,6 +141,22 @@ If a route function raises an error, Flacon sends a `500 Internal Server Error`
 page to the browser. The error message and any `print()` output are visible in
 the `Flacon` output channel in VS Code.
 
+Flacon sends every HTTP method to the matching route, including `GET`, `POST`,
+`PUT`, `DELETE`, `PATCH`, `OPTIONS`, `HEAD`, and custom method names. If a route
+only supports some methods, check `request.method` and return
+`method_not_allowed(...)` for the others:
+
+```python
+@route("/items")
+def items(request):
+    if request.method == "GET":
+        return html_page("<h1>Items</h1>")
+    if request.method == "POST":
+        return text("Created", 201)
+
+    return method_not_allowed("GET", "POST")
+```
+
 ### Request
 
 If a route function has one parameter, Flacon passes a `request` value to it.
@@ -146,10 +165,10 @@ This contains information about the current browser request.
 | Name | Type | Explanation |
 | --- | --- | --- |
 | `request.path` | `str` | The requested URL path, for example `"/hello"`. |
-| `request.method` | `str` | The HTTP method, usually `"GET"` or `"POST"`. |
+| `request.method` | `str` | The HTTP method, for example `"GET"`, `"POST"`, `"PUT"`, `"DELETE"`, `"PATCH"`, `"OPTIONS"`, or `"HEAD"`. |
 | `request.query` | `dict[str, str]` | Query string values from the URL. If a name occurs more than once, this contains the last value. |
 | `request.query_all` | `dict[str, list[str]]` | Query string values from the URL, keeping all values for repeated names. |
-| `request.form` | `dict[str, str]` | Submitted form values for `POST` requests with normal HTML forms. If a name occurs more than once, this contains the last value. |
+| `request.form` | `dict[str, str]` | Submitted form values for requests with normal URL-encoded HTML form data. If a name occurs more than once, this contains the last value. |
 | `request.form_all` | `dict[str, list[str]]` | Submitted form values, keeping all values for repeated names. |
 | `request.body` | `str` | The raw request body as text. |
 | `request.headers` | object | The request headers sent by the browser. |
@@ -174,7 +193,15 @@ return text("Hello!")
 return json('{"message": "Hello!"}')
 ```
 
-All three helper functions accept an optional status code:
+`method_not_allowed(*allowed_methods)` returns a `405 Method Not Allowed`
+response. If you pass supported method names, Flacon also sends them in the
+HTTP `Allow` header.
+
+```python
+return method_not_allowed("GET", "POST")
+```
+
+The `html_page`, `text`, and `json` helpers accept an optional status code:
 
 ```python
 return html_page("<h1>Forbidden</h1>", 403)

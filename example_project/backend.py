@@ -1,6 +1,6 @@
 import html
 
-from flacon import html_page, render_template, route, text
+from flacon import html_page, method_not_allowed, render_template, route, text
 
 
 
@@ -51,6 +51,9 @@ def contact(request):
           <button type="submit">Send</button>
         </form>
         """
+
+    if request.method != "POST":
+        return method_not_allowed("GET", "POST")
 
     name = html.escape(request.form.get("name", "friend"))
     message = html.escape(request.form.get("message", ""))
