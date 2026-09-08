@@ -35,10 +35,18 @@ from typing import Callable, TypeAlias
 from urllib.parse import parse_qs, unquote, urlparse
 
 DEFAULT_PORTS = (80, 8000, 8080)
-ROUTES: dict[str, Callable[..., object]] = {}
 PROJECT_DIR: Path | None = None
 TEMPLATE_TOKEN_RE = re.compile(r"({{.*?}}|{%.*?%})", re.DOTALL)
 FOR_TAG_RE = re.compile(r"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s+(.+)$", re.DOTALL)
+
+
+@dataclass
+class Route:
+    handler: Callable[..., object]
+    methods: tuple[str, ...]
+
+
+ROUTES: dict[str, Route] = {}
 
 
 @dataclass
@@ -61,16 +69,38 @@ class Response:
     headers: dict[str, str] | None = None
 
 
-def route(path: str) -> Callable[[Callable[..., object]], Callable[..., object]]:
+def route(path: str, methods: Iterable[str] | None = None) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Register a function as the handler for a URL path."""
     if not path.startswith("/"):
         path = "/" + path
+    allowed_methods = _normalize_methods(methods)
 
     def register(function: Callable[..., object]) -> Callable[..., object]:
-        ROUTES[path] = function
+        ROUTES[path] = Route(function, allowed_methods)
         return function
 
     return register
+
+
+def _normalize_methods(methods: Iterable[str] | None) -> tuple[str, ...]:
+    if methods is None:
+        return ("GET",)
+    if isinstance(methods, str):
+        raise TypeError("route methods must be a list of HTTP method names, not a string.")
+
+    normalized_methods: list[str] = []
+    seen: set[str] = set()
+    for method in methods:
+        if not isinstance(method, str):
+            raise TypeError("route methods must contain only strings.")
+        normalized_method = method.strip().upper()
+        if not normalized_method:
+            raise ValueError("route methods must not contain empty method names.")
+        if normalized_method not in seen:
+            normalized_methods.append(normalized_method)
+            seen.add(normalized_method)
+
+    return tuple(normalized_methods)
 
 
 def text(body: str, status: int = 200) -> Response:
@@ -87,16 +117,6 @@ def json(data: str, status: int = 200) -> Response:
 
 def redirect(location: str, status: int = 302) -> Response:
     return Response("", status=status, headers={"Location": location})
-
-
-def method_not_allowed(*allowed_methods: str) -> Response:
-    headers = {"Allow": ", ".join(allowed_methods)} if allowed_methods else None
-    return Response(
-        "Method Not Allowed",
-        status=405,
-        content_type="text/plain; charset=utf-8",
-        headers=headers,
-    )
 
 
 def render_template(template_name: str, **context: object) -> str:
@@ -448,6 +468,19 @@ def _send_error_page(handler: BaseHTTPRequestHandler, status: int, title: str, d
     _send_response(handler, Response(body, status=status))
 
 
+def _send_method_not_allowed(handler: BaseHTTPRequestHandler, allowed_methods: tuple[str, ...]) -> None:
+    headers = {"Allow": ", ".join(allowed_methods)} if allowed_methods else None
+    _send_response(
+        handler,
+        Response(
+            "Method Not Allowed",
+            status=405,
+            content_type="text/plain; charset=utf-8",
+            headers=headers,
+        ),
+    )
+
+
 def _make_handler(project_dir: Path) -> type[BaseHTTPRequestHandler]:
     static_dir = project_dir / "static"
 
@@ -490,13 +523,17 @@ def _make_handler(project_dir: Path) -> type[BaseHTTPRequestHandler]:
                     _send_file(self, static_file)
                     return
 
-            handler_function = ROUTES.get(request.path)
-            if handler_function is None:
+            route_info = ROUTES.get(request.path)
+            if route_info is None:
                 _send_error_page(self, 404, "Not Found", f"No route for {request.method} {request.path}")
                 return
 
+            if request.method not in route_info.methods:
+                _send_method_not_allowed(self, route_info.methods)
+                return
+
             try:
-                response = _call_route(handler_function, request)
+                response = _call_route(route_info.handler, request)
                 _send_response(self, response)
             except Exception as error:
                 _send_error_page(self, 500, "Internal Server Error", str(error))

@@ -68,13 +68,13 @@ The following commands are available from the VS Code Command Palette.
 ## Backend Example
 
 ```python
-from flacon import method_not_allowed, route
+from flacon import route
 
 @route("/hello")
 def hello():
     return "<h1>Hello from Python</h1>"
 
-@route("/contact")
+@route("/contact", methods=["GET", "POST"])
 def contact(request):
     if request.method == "GET":
         return """
@@ -83,9 +83,6 @@ def contact(request):
           <button type="submit">Send</button>
         </form>
         """
-
-    if request.method != "POST":
-        return method_not_allowed("GET", "POST")
 
     name = request.form.get("name", "friend")
     return f"<h1>Hello, {name}!</h1>"
@@ -97,13 +94,13 @@ Backend routes are written in `backend.py`. Import the Flacon helpers you want
 to use at the top of the file:
 
 ```python
-from flacon import html_page, json, method_not_allowed, render_template, route, text
+from flacon import html_page, json, render_template, route, text
 ```
 
 ### Routes
 
 Use `@route("/some/path")` directly above a function to connect that URL path to
-the function.
+the function. If you do not pass `methods=...`, the route accepts only `GET`.
 
 ```python
 @route("/hello")
@@ -141,20 +138,18 @@ If a route function raises an error, Flacon sends a `500 Internal Server Error`
 page to the browser. The error message and any `print()` output are visible in
 the `Flacon` output channel in VS Code.
 
-Flacon sends every HTTP method to the matching route, including `GET`, `POST`,
-`PUT`, `DELETE`, `PATCH`, `OPTIONS`, `HEAD`, and custom method names. If a route
-only supports some methods, check `request.method` and return
-`method_not_allowed(...)` for the others:
+Pass `methods=[...]` to list the HTTP methods a route accepts. Flacon supports
+`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`, `HEAD`, and custom method
+names. If the browser sends a method that is not listed, Flacon automatically
+returns `405 Method Not Allowed`.
 
 ```python
-@route("/items")
+@route("/items", methods=["GET", "POST"])
 def items(request):
     if request.method == "GET":
         return html_page("<h1>Items</h1>")
     if request.method == "POST":
         return text("Created", 201)
-
-    return method_not_allowed("GET", "POST")
 ```
 
 ### Request
@@ -191,14 +186,6 @@ return text("Hello!")
 
 ```python
 return json('{"message": "Hello!"}')
-```
-
-`method_not_allowed(*allowed_methods)` returns a `405 Method Not Allowed`
-response. If you pass supported method names, Flacon also sends them in the
-HTTP `Allow` header.
-
-```python
-return method_not_allowed("GET", "POST")
 ```
 
 The `html_page`, `text`, and `json` helpers accept an optional status code:
