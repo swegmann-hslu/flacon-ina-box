@@ -14,15 +14,15 @@ GitHub Release.
 5. Create and push a matching tag:
 
    ```powershell
-   git tag v0.2.1
+   git tag v1.0.0
    git push origin main
-   git push origin v0.2.1
+   git push origin v1.0.0
    ```
 
 6. Check the `Release VSIX` workflow run on GitHub.
 
 The tag must match the package version exactly with a leading `v`. For example,
-`package.json` version `0.2.1` must be released as tag `v0.2.1`.
+`package.json` version `1.0.0` must be released as tag `v1.0.0`.
 
 ## Verification
 
@@ -30,7 +30,7 @@ Each release includes a SHA-256 checksum next to the `.vsix` package. Users can
 verify the downloaded package with:
 
 ```powershell
-Get-FileHash .\flacon-in-a-box-v0.2.1.vsix -Algorithm SHA256
+Get-FileHash .\flacon-in-a-box-v1.0.0.vsix -Algorithm SHA256
 ```
 
 The workflow also creates a GitHub artifact attestation for the `.vsix`. Users
@@ -38,7 +38,7 @@ with the GitHub CLI can verify that the package was built by this repository's
 release workflow:
 
 ```powershell
-gh attestation verify .\flacon-in-a-box-v0.2.1.vsix --repo swegmann-hslu/flacon-ina-box
+gh attestation verify .\flacon-in-a-box-v1.0.0.vsix --repo swegmann-hslu/flacon-ina-box
 ```
 
 ## Notes

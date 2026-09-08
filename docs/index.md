@@ -7,8 +7,7 @@ title: User Guide
 
 # Flacon in a Box User Guide
 
-Documentation version: **current `main` branch implementation, based on package
-version 0.2.0 plus the `Unreleased` changes in `CHANGELOG.md`**
+Documentation version: **Flacon in a Box 1.0.0**
 
 This page describes the user-facing behavior of the Flacon in a Box VS Code
 extension and the bundled `flacon` Python package interface.

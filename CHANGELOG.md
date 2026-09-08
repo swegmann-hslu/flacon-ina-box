@@ -4,6 +4,8 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 
 ## Unreleased
 
+## 1.0.0 - 2026-09-08
+
 - Restarts the running Flacon server automatically when the workspace root `backend.py` file is saved, created, or deleted.
 - Adds `render_template()` for small Jinja-inspired templates with value insertion, loops, conditionals, and includes.
 - Adds `methods=[...]` to `@route()` so routes can explicitly accept methods such as `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`, `HEAD`, and custom HTTP method names.
@@ -12,6 +14,8 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 - Declares that the extension requires trusted workspaces and does not support virtual workspaces.
 - Disables Marketplace Q&A in favor of GitHub Issues support.
 - Declares the extension pricing as free in the Marketplace metadata.
+- Adds a dark teal Marketplace gallery banner matching the extension icon.
+- Excludes published documentation sources and release instructions from the packaged extension.
 
 ## 0.2.0 - 2026-08-19
 
