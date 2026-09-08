@@ -16,6 +16,10 @@
   "qna": false,
   "pricing": "Free",
   "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#063E3F",
+    "theme": "dark"
+  },
   "keywords": [
     "flacon",
     "flask",
