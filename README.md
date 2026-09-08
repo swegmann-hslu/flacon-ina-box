@@ -56,6 +56,10 @@ The backend code goes into a file called `backend.py` in the root directory of
 your project. If this file is missing, Flacon acts as a simple static resource
 web server.
 
+Flacon runs Python code from the opened workspace, so VS Code must trust the
+workspace before the extension can run. Virtual workspaces are not supported
+because Flacon needs local filesystem paths and a local Python process.
+
 ## Commands
 
 The following commands are available from the VS Code Command Palette.

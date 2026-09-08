@@ -41,12 +41,17 @@ surface of a real production framework.
 - A working Python 3.10 through 3.14 interpreter available to VS Code.
 - One project folder opened directly in VS Code. Flacon works with one opened
   workspace folder at a time.
+- A trusted workspace. Flacon runs Python code from the opened folder and is
+  disabled in untrusted workspaces.
 
 The bundled Flacon server uses Python 3.10-compatible syntax and standard
 library APIs. No Python 3.11, 3.12, 3.13, or 3.14-specific runtime features are
 required. Python 3.15 is expected to work from the current source code, but
 should be confirmed with a final Python 3.15 release before it is listed as a
 formally supported version.
+
+Virtual workspaces are not supported because Flacon needs local filesystem
+paths and starts a local Python process.
 
 ## Project Layout
 
@@ -379,6 +384,8 @@ limits:
 - it is intended for local development in VS Code;
 - it listens on `localhost` only;
 - it serves one opened workspace folder;
+- it requires a trusted workspace;
+- it requires a local filesystem workspace, not a virtual workspace;
 - it is not a production web server;
 - it does not watch imported Python helper files for automatic restart;
 - it does not implement full Flask, Jinja, cookies, sessions, authentication, or

@@ -13,6 +13,8 @@
     "url": "https://github.com/swegmann-hslu/flacon-ina-box/issues"
   },
   "homepage": "https://swegmann-hslu.github.io/flacon-ina-box/",
+  "qna": false,
+  "pricing": "Free",
   "icon": "media/icon.png",
   "keywords": [
     "flacon",
@@ -45,6 +47,16 @@
   "extensionDependencies": [
     "ms-python.python"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Flacon runs Python code from the opened workspace and therefore requires a trusted workspace."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Flacon requires local filesystem paths and a local Python process, which are not available in virtual workspaces."
+    }
+  },
   "contributes": {
     "commands": [
       {
