@@ -3,6 +3,10 @@
 Flacon in a Box is a small VS Code extension for running the currently opened
 folder as a Flask-inspired Python teaching web application.
 
+User documentation is available in the GitHub Pages site source under
+[`docs/`](docs/index.md). The published documentation is available at
+<https://swegmann-hslu.github.io/flacon-ina-box/>.
+
 The extension bundles `resources/flacon_server.py` and starts it with the selected
 Python interpreter from the Microsoft Python extension when available.
 

@@ -7,10 +7,11 @@ GitHub Release.
 ## Normal Release
 
 1. Update `version` in `package.json`.
-2. Update `CHANGELOG.md`, moving relevant entries from `Unreleased` into the new
+2. Update the documentation version in `docs/index.md`.
+3. Update `CHANGELOG.md`, moving relevant entries from `Unreleased` into the new
    version section.
-3. Commit those changes.
-4. Create and push a matching tag:
+4. Commit those changes.
+5. Create and push a matching tag:
 
    ```powershell
    git tag v0.2.1
@@ -18,7 +19,7 @@ GitHub Release.
    git push origin v0.2.1
    ```
 
-5. Check the `Release VSIX` workflow run on GitHub.
+6. Check the `Release VSIX` workflow run on GitHub.
 
 The tag must match the package version exactly with a leading `v`. For example,
 `package.json` version `0.2.1` must be released as tag `v0.2.1`.
