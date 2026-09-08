@@ -91,8 +91,9 @@ def hello():
    changes.
 8. Open `/hello` in the browser, for example `http://localhost:8000/hello`.
 
-Flacon tries the ports `80`, `8000`, and `8080`, using the first available one.
-The actual URL is shown in the status bar and in the `Flacon` output channel.
+Flacon listens on `localhost` and tries the ports `80`, `8000`, and
+`8080`, using the first available one. The actual URL is shown in the status
+bar and in the `Flacon` output channel.
 
 ## VS Code Features
 
@@ -376,6 +377,7 @@ limits:
   `@route(..., methods=[...])`;
 - `HEAD` is handled by the server, but backend routes must list it explicitly;
 - it is intended for local development in VS Code;
+- it listens on `localhost` only;
 - it serves one opened workspace folder;
 - it is not a production web server;
 - it does not watch imported Python helper files for automatic restart;

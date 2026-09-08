@@ -35,6 +35,7 @@ from typing import Callable, TypeAlias
 from urllib.parse import parse_qs, unquote, urlparse
 
 DEFAULT_PORTS = (80, 8000, 8080)
+DEFAULT_HOST = "localhost"
 PROJECT_DIR: Path | None = None
 TEMPLATE_TOKEN_RE = re.compile(r"({{.*?}}|{%.*?%})", re.DOTALL)
 FOR_TAG_RE = re.compile(r"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s+(.+)$", re.DOTALL)
@@ -550,12 +551,12 @@ def _start_server(project_dir: Path, ports: tuple[int, ...]) -> None:
 
     for port in ports:
         try:
-            server = ThreadingHTTPServer(("", port), handler_class)
+            server = ThreadingHTTPServer((DEFAULT_HOST, port), handler_class)
         except OSError as error:
             last_error = error
             continue
 
-        print(f"Serving {project_dir} at http://localhost:{port}")
+        print(f"Serving {project_dir} at http://{DEFAULT_HOST}:{port}")
         print("Press Ctrl+C to stop.")
         try:
             server.serve_forever()

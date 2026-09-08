@@ -8,6 +8,7 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 - Adds `render_template()` for small Jinja-inspired templates with value insertion, loops, conditionals, and includes.
 - Adds `methods=[...]` to `@route()` so routes can explicitly accept methods such as `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`, `HEAD`, and custom HTTP method names.
 - Returns `405 Method Not Allowed` automatically when a request uses a method that is not listed for the matching route.
+- Binds the local Flacon server to `localhost` instead of all network interfaces.
 
 ## 0.2.0 - 2026-08-19
 
