@@ -95,9 +95,10 @@ def hello():
    changes.
 8. Open `/hello` in the browser, for example `http://localhost:8000/hello`.
 
-Flacon listens on `localhost` and tries the ports `80`, `8000`, and
-`8080`, using the first available one. The actual URL is shown in the status
-bar and in the `Flacon` output channel.
+Flacon listens on `localhost` and tries the ports from the `flacon.ports`
+setting, using the first available one. By default it tries `80`, `8000`, and
+`8080`. The actual URL is shown in the status bar and in the `Flacon` output
+channel.
 
 ## VS Code Features
 
@@ -126,6 +127,12 @@ and stop or error messages.
 While Flacon is running, changes to the workspace root `backend.py` file restart
 the server automatically. Imported helper modules are not watched; restart
 Flacon manually after changing those files.
+
+## Settings
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `flacon.ports` | `[80, 8000, 8080]` | Ordered list of `localhost` ports Flacon tries when starting the Python server. Use one value, such as `[5000]`, to require a specific port. Use multiple values, such as `[5000, 8000, 8080]`, to provide fallback ports. |
 
 ## Backend Basics
 
@@ -407,7 +414,7 @@ If the server does not start:
 
 - check the selected Python interpreter in VS Code;
 - inspect the `Flacon` output channel;
-- make sure one of the ports `80`, `8000`, or `8080` is available.
+- make sure one of the ports listed in `flacon.ports` is available.
 
 If changes to backend code are not visible:
 

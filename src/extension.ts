@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_PORTS = [80, 8000, 8080];
+const MIN_PORT = 1;
+const MAX_PORT = 65535;
 const STARTER_BACKEND = `from flacon import html_page, route
 
 
@@ -109,10 +111,15 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
 
   const serverScript = vscode.Uri.joinPath(context.extensionUri, 'resources', 'flacon_server.py').fsPath;
   const pythonExecutable = await resolvePythonExecutable(workspaceFolder.uri);
-  const ports = await getAvailablePorts(DEFAULT_PORTS);
+  const configuredPorts = getConfiguredPorts(workspaceFolder.uri);
+  if (!configuredPorts) {
+    return;
+  }
+
+  const ports = await getAvailablePorts(configuredPorts);
 
   if (ports.length === 0) {
-    void vscode.window.showErrorMessage(`Flacon could not find a free port among ${DEFAULT_PORTS.join(', ')}.`);
+    void vscode.window.showErrorMessage(`Flacon could not find a free port among ${configuredPorts.join(', ')}.`);
     return;
   }
 
@@ -121,6 +128,7 @@ async function startServer(context: vscode.ExtensionContext): Promise<void> {
   outputChannel.appendLine(`Starting Flacon for ${workspaceFolder.uri.fsPath}`);
   outputChannel.appendLine(`Python: ${pythonExecutable}`);
   outputChannel.appendLine(`Script: ${serverScript}`);
+  outputChannel.appendLine(`Ports: ${configuredPorts.join(', ')}`);
 
   serverProcess = cp.spawn(
     pythonExecutable,
@@ -392,6 +400,43 @@ async function resolvePythonExecutable(resource: vscode.Uri): Promise<string> {
   }
 
   return process.platform === 'win32' ? 'python' : 'python3';
+}
+
+function getConfiguredPorts(resource: vscode.Uri): number[] | undefined {
+  const configuredPorts = vscode.workspace.getConfiguration('flacon', resource).get<unknown>('ports', DEFAULT_PORTS);
+
+  if (!Array.isArray(configuredPorts)) {
+    void vscode.window.showErrorMessage('Flacon setting "flacon.ports" must be a list of port numbers.');
+    return undefined;
+  }
+
+  const ports: number[] = [];
+  const invalidPorts: unknown[] = [];
+
+  for (const value of configuredPorts) {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < MIN_PORT || value > MAX_PORT) {
+      invalidPorts.push(value);
+      continue;
+    }
+
+    if (!ports.includes(value)) {
+      ports.push(value);
+    }
+  }
+
+  if (invalidPorts.length > 0) {
+    void vscode.window.showErrorMessage(
+      `Flacon setting "flacon.ports" contains invalid port values: ${invalidPorts.map(String).join(', ')}. Use whole numbers from ${MIN_PORT} to ${MAX_PORT}.`
+    );
+    return undefined;
+  }
+
+  if (ports.length === 0) {
+    void vscode.window.showErrorMessage('Flacon setting "flacon.ports" must contain at least one port number.');
+    return undefined;
+  }
+
+  return ports;
 }
 
 async function getAvailablePorts(ports: number[]): Promise<number[]> {

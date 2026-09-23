@@ -73,6 +73,12 @@ The following commands are available from the VS Code Command Palette.
 | `Flacon: Open in Browser` | Opens the running Flacon server in your default browser. |
 | `Flacon: Fix Pylance warning for 'flacon'` | Adds the bundled Flacon helper file to Pylance so imports such as `from flacon import route` are recognized. |
 
+## Settings
+
+| Setting | Default | Explanation |
+| --- | --- | --- |
+| `flacon.ports` | `[80, 8000, 8080]` | Ordered list of `localhost` ports Flacon tries when starting the Python server. Set it to a single value such as `[5000]` to require that port, or list fallback ports such as `[5000, 8000, 8080]`. |
+
 ## Backend Example
 
 ```python

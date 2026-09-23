@@ -4,6 +4,9 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 
 ## Unreleased
 
+- Adds the `flacon.ports` VS Code setting for choosing the ordered list of ports
+  the Python Flacon server tries at startup.
+
 ## 1.0.0 - 2026-09-08
 
 - Restarts the running Flacon server automatically when the workspace root `backend.py` file is saved, created, or deleted.
