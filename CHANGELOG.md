@@ -6,6 +6,9 @@ All notable changes to the Flacon in a Box extension will be documented in this 
 
 - Adds the `flacon.ports` VS Code setting for choosing the ordered list of ports
   the Python Flacon server tries at startup.
+- Standardizes local development and release builds on Node.js 26.12.1, the
+  patched 26.x release for the Node2Shell Brotli vulnerability
+  (CVE-2026-111497), and declares the supported Node.js 26 version range.
 
 ## 1.0.0 - 2026-09-08
 
